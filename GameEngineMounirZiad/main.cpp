@@ -15,7 +15,7 @@
 #include "RenderSystem.h"
 #include "ModelLoader.h"
 #include "TerrainSystem.h"
-#include "TerrainComponent.h"
+#include "PhysicsSystem.h"
 
 // New systems includes
 #include "ShaderManager.h"
@@ -37,10 +37,15 @@ const unsigned int SCR_WIDTH = 800;
 const unsigned int SCR_HEIGHT = 600;
 
 // camera - create camera instance and initialize mouse tracking variables
-Camera camera(glm::vec3(0.0f, 0.0f, 3.0f));
+Camera camera(glm::vec3(0.0f, 5.0f, 10.0f)); // Start higher to see falling objects
+
+// Mouse and input variables
 float lastX = (float)SCR_WIDTH / 2.0;
 float lastY = (float)SCR_HEIGHT / 2.0;
 bool firstMouse = true;
+bool cursorEnabled = false;
+double lastMouseX = SCR_WIDTH / 2.0;
+double lastMouseY = SCR_HEIGHT / 2.0;
 
 // timing - variables for smooth movement
 float deltaTime = 0.0f;
@@ -48,6 +53,40 @@ float lastFrame = 0.0f;
 
 static size_t gpuMemoryUsage = 0;
 static size_t systemMemoryUsage = 0;
+
+// Vector to track all cubes
+std::vector<Entity> cubeEntities;
+
+// Function to create a new cube entity
+Entity CreateCube(Registry& registry, const glm::vec3& position, Material* material, unsigned int VAO) {
+    Entity newCube = registry.CreateEntity();
+
+    // Add transform component
+    registry.AddComponent(newCube, TransformComponent(
+        position,
+        { 0.0f, 0.0f, 0.0f },
+        { 1.0f, 1.0f, 1.0f }
+    ));
+
+    // Add physics component
+    registry.AddComponent(newCube, PhysicsComponent(true, 1.0f));
+
+    // Add collider component
+    registry.AddComponent(newCube, ColliderComponent(ColliderType::BOX));
+    auto collider = registry.GetComponent<ColliderComponent>(newCube);
+    if (collider) {
+        collider->radius = 0.866f; // Approximate sphere radius for cube
+    }
+
+    // Add mesh component
+    MeshComponent meshComp;
+    meshComp.VAO = VAO;
+    meshComp.vertexCount = 36;
+    meshComp.material = material;
+    registry.AddComponent(newCube, meshComp);
+
+    return newCube;
+}
 
 // Function to scan models directory and get available models
 std::vector<std::string> GetAvailableModels() {
@@ -93,7 +132,7 @@ std::vector<std::string> GetAvailableModels() {
     return models;
 }
 
-// Function to load a new model
+// Enhanced Function to load a new model with physics
 bool LoadNewModel(Registry& registry, const std::string& modelPath,
     Entity& currentModelEntity, Material* material,
     size_t& gpuMemUsage, size_t& sysMemUsage) {
@@ -112,10 +151,14 @@ bool LoadNewModel(Registry& registry, const std::string& modelPath,
     if (ModelLoader::LoadOBJ(fullPath, loadedVAO, loadedVertexCount)) {
         Entity newModel = registry.CreateEntity();
         registry.AddComponent(newModel, TransformComponent(
-            { 2.0f, 0.0f, -5.0f },
+            { 2.0f, 8.0f, -5.0f },  // Start higher for falling
             { 0.0f, 0.0f, 0.0f },
             { 1.0f, 1.0f, 1.0f }
         ));
+
+        // Add physics to model
+        registry.AddComponent(newModel, PhysicsComponent(true, 2.0f)); // Heavier mass
+        registry.AddComponent(newModel, ColliderComponent(ColliderType::SPHERE));
 
         MeshComponent loadedMeshComp;
         loadedMeshComp.VAO = loadedVAO;
@@ -123,12 +166,13 @@ bool LoadNewModel(Registry& registry, const std::string& modelPath,
         loadedMeshComp.material = material;
         registry.AddComponent(newModel, loadedMeshComp);
 
-        // Update memory usage (simplified calculation)
-        gpuMemUsage = sizeof(float) * loadedVertexCount * 8;  // 3 pos + 3 normal + 2 UV approx
-        sysMemUsage = sizeof(TransformComponent) + sizeof(MeshComponent);
+        // Update memory usage
+        gpuMemUsage = sizeof(float) * loadedVertexCount * 8;
+        sysMemUsage = sizeof(TransformComponent) + sizeof(MeshComponent) +
+            sizeof(PhysicsComponent) + sizeof(ColliderComponent);
 
         currentModelEntity = newModel;
-        std::cout << "Successfully loaded model: " << modelPath << std::endl;
+        std::cout << "Successfully loaded model with physics: " << modelPath << std::endl;
         return true;
     }
     else {
@@ -152,7 +196,7 @@ int main()
     glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
 
     // Create Window
-    GLFWwindow* window = glfwCreateWindow(SCR_WIDTH, SCR_HEIGHT, "Game Engine Example", NULL, NULL);
+    GLFWwindow* window = glfwCreateWindow(SCR_WIDTH, SCR_HEIGHT, "Game Engine with Physics", NULL, NULL);
     if (window == NULL) {
         std::cout << "Failed to create GLFW window" << std::endl;
         glfwTerminate();
@@ -192,8 +236,9 @@ int main()
     // ECS SETUP
     Registry registry;
 
-    // Create terrain system
+    // Create systems
     TerrainSystem terrainSystem;
+    PhysicsSystem physicsSystem;
 
     // Create terrain entity
     Entity terrainEntity = registry.CreateEntity();
@@ -204,7 +249,7 @@ int main()
     ));
 
     // Create and generate terrain
-    TerrainComponent terrainComp(128, 128, 0.5f, 2.0f); // Larger, more detailed terrain
+    TerrainComponent terrainComp(128, 128, 0.5f, 5.0f); // Larger, more detailed terrain with higher hills
     terrainSystem.GenerateTerrain(terrainComp);
     registry.AddComponent(terrainEntity, terrainComp);
 
@@ -274,13 +319,21 @@ int main()
     glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, 6 * sizeof(float), (void*)(3 * sizeof(float)));
     glEnableVertexAttribArray(1);
 
-    // Create cube entity
+    // Create cube entity with physics
     Entity cube = registry.CreateEntity();
     registry.AddComponent(cube, TransformComponent(
-        { 0.0f, 1.0f, -5.0f },  // Position cube above terrain
+        { 0.0f, 10.0f, -5.0f },  // Start higher for falling
         { 0.0f, 0.0f, 0.0f },
         { 1.0f, 1.0f, 1.0f }
     ));
+
+    // Add physics to cube
+    registry.AddComponent(cube, PhysicsComponent(true, 1.0f)); // Use gravity, mass = 1
+    registry.AddComponent(cube, ColliderComponent(ColliderType::BOX));
+    auto cubeCollider = registry.GetComponent<ColliderComponent>(cube);
+    if (cubeCollider) {
+        cubeCollider->radius = 0.866f; // Approximate sphere radius for cube (sqrt(3)/2)
+    }
 
     // Create materials for CUBE using ShaderManager
     Material* cubePhongMaterial = new Material(SHADER_MANAGER.GetShader(ShaderManager::PHONG), glm::vec3(1.0f, 0.0f, 0.0f));
@@ -307,6 +360,9 @@ int main()
     meshComp.material = cubePhongMaterial; // Start with cube phong material
     registry.AddComponent(cube, meshComp);
 
+    // Add the first cube to our tracking vector
+    cubeEntities.push_back(cube);
+
     // Load initial model
     if (!availableModels.empty()) {
         LoadNewModel(registry, availableModels[currentModelIndex], loadedModelEntity,
@@ -317,20 +373,20 @@ int main()
     RenderSystem renderer;
 
     // Lighting variables
-    glm::vec3 lightPos(1.2f, 1.0f, 2.0f);
+    glm::vec3 lightPos(1.2f, 5.0f, 2.0f);
     glm::vec3 lightColor(1.0f, 1.0f, 1.0f);
 
-    // UI state variables - add terrain controls
+    // UI state variables
     static int currentShader = 0;
     static int currentMaterial = 0;
     static int previousModelIndex = -1;  // Track model changes
-    static float terrainHeightScale = 2.0f;
+    static float terrainHeightScale = 5.0f;
     static float terrainScale = 0.5f;
 
     // Render loop
     while (!glfwWindowShouldClose(window)) {
         // Timing
-        float currentFrame = (float)glfwGetTime();
+        float currentFrame = static_cast<float>(glfwGetTime());
         deltaTime = currentFrame - lastFrame;
         lastFrame = currentFrame;
 
@@ -345,6 +401,9 @@ int main()
         // Clear screen
         glClearColor(0.53f, 0.81f, 0.92f, 1.0f); // Sky blue background
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+
+        // Update physics BEFORE rendering
+        physicsSystem.Update(registry, deltaTime);
 
         // Start ImGui frame
         ImGui_ImplOpenGL3_NewFrame();
@@ -363,7 +422,112 @@ int main()
         ImGui::ColorEdit3("Light Color", (float*)&lightColor);
         ImGui::SliderFloat3("Light Position", (float*)&lightPos, -10.0f, 10.0f);
 
+        // Physics Controls
+        ImGui::Separator();
+        ImGui::Text("Physics Controls");
+
+        if (auto physics = registry.GetComponent<PhysicsComponent>(cube)) {
+            ImGui::Checkbox("Cube Use Gravity", &physics->useGravity);
+            ImGui::SliderFloat("Cube Mass", &physics->mass, 0.1f, 10.0f);
+            ImGui::SliderFloat("Bounciness", &physics->restitution, 0.0f, 1.0f);
+            ImGui::Text("Cube Grounded: %s", physics->isGrounded ? "Yes" : "No");
+
+            if (ImGui::Button("Reset Cube Position")) {
+                if (auto transform = registry.GetComponent<TransformComponent>(cube)) {
+                    transform->position = { 0.0f, 10.0f, -5.0f };
+                    physics->velocity = { 0.0f, 0.0f, 0.0f };
+                    physics->isGrounded = false;
+                }
+            }
+        }
+
+        // Model physics controls
+        if (auto physics = registry.GetComponent<PhysicsComponent>(loadedModelEntity)) {
+            ImGui::Checkbox("Model Use Gravity", &physics->useGravity);
+            ImGui::Text("Model Grounded: %s", physics->isGrounded ? "Yes" : "No");
+
+            if (ImGui::Button("Reset Model Position")) {
+                if (auto transform = registry.GetComponent<TransformComponent>(loadedModelEntity)) {
+                    transform->position = { 2.0f, 8.0f, -5.0f };
+                    physics->velocity = { 0.0f, 0.0f, 0.0f };
+                    physics->isGrounded = false;
+                }
+            }
+        }
+
+        // Cube Management
+        ImGui::Separator();
+        ImGui::Text("Cube Management");
+
+        // Button to add new cube
+        if (ImGui::Button("Add New Cube")) {
+            // Create a random position around the scene
+            float x = static_cast<float>(rand()) / static_cast<float>(RAND_MAX) * 10.0f - 5.0f;
+            float z = static_cast<float>(rand()) / static_cast<float>(RAND_MAX) * 10.0f - 5.0f;
+
+            // Create a random color
+            float r = static_cast<float>(rand()) / static_cast<float>(RAND_MAX);
+            float g = static_cast<float>(rand()) / static_cast<float>(RAND_MAX);
+            float b = static_cast<float>(rand()) / static_cast<float>(RAND_MAX);
+
+            // Create a new material with random color
+            Material* newCubeMaterial = new Material(SHADER_MANAGER.GetShader(ShaderManager::PHONG), glm::vec3(r, g, b));
+
+            // Create the new cube
+            Entity newCube = CreateCube(registry,
+                glm::vec3(x, 15.0f, z), // Start high so it falls
+                newCubeMaterial,
+                VAO);
+
+            // Add to tracking vector
+            cubeEntities.push_back(newCube);
+
+            std::cout << "Added new cube at position: " << x << ", 15.0, " << z << std::endl;
+        }
+
+        // Display cube count
+        ImGui::Text("Total Cubes: %zu", cubeEntities.size());
+
+        // Button to remove all cubes except the first one
+        if (ImGui::Button("Remove All Extra Cubes") && cubeEntities.size() > 1) {
+            // Remove all cubes except the first one
+            for (size_t i = 1; i < cubeEntities.size(); i++) {
+                registry.DestroyEntity(cubeEntities[i]);
+            }
+            cubeEntities.resize(1); // Keep only the first cube
+            std::cout << "Removed all extra cubes" << std::endl;
+        }
+
+        // Button to reset all cubes positions
+        if (ImGui::Button("Reset All Cubes")) {
+            for (size_t i = 0; i < cubeEntities.size(); i++) {
+                if (auto transform = registry.GetComponent<TransformComponent>(cubeEntities[i])) {
+                    if (auto physics = registry.GetComponent<PhysicsComponent>(cubeEntities[i])) {
+                        // Random position for variety
+                        float x = static_cast<float>(rand()) / static_cast<float>(RAND_MAX) * 10.0f - 5.0f;
+                        float z = static_cast<float>(rand()) / static_cast<float>(RAND_MAX) * 10.0f - 5.0f;
+
+                        transform->position = glm::vec3(x, 10.0f + i * 2.0f, z); // Stagger heights
+                        physics->velocity = { 0.0f, 0.0f, 0.0f };
+                        physics->isGrounded = false;
+                    }
+                }
+            }
+            std::cout << "Reset all cube positions" << std::endl;
+        }
+
+        // Individual cube controls (optional - for more advanced management)
+        if (cubeEntities.size() > 0) {
+            ImGui::Separator();
+            ImGui::Text("Cube %d Controls:", 0);
+            if (auto t = registry.GetComponent<TransformComponent>(cubeEntities[0])) {
+                ImGui::SliderFloat3("Cube 0 Position", (float*)&t->position, -10.0f, 10.0f);
+            }
+        }
+
         // Cube Transform
+        ImGui::Separator();
+        ImGui::Text("Cube Settings");
         if (auto t = registry.GetComponent<TransformComponent>(cube)) {
             ImGui::SliderFloat3("Cube Position", (float*)&t->position, -10.0f, 10.0f);
             ImGui::SliderFloat3("Cube Rotation", (float*)&t->rotation, -180.0f, 180.0f);
@@ -403,7 +567,7 @@ int main()
 
         // Shader selection
         ImGui::Separator();
-        ImGui::Text("Cube Settings");
+        ImGui::Text("Cube Shader Settings");
         const char* shaders[] = { "Phong", "PBR", "Wireframe", "Flat", "Unlit" };
         ImGui::Combo("Shader Type", &currentShader, shaders, 5);
 
@@ -418,7 +582,7 @@ int main()
         if (auto t = registry.GetComponent<TerrainComponent>(terrainEntity)) {
             ImGui::Checkbox("Wireframe", &t->wireframe);
 
-            if (ImGui::SliderFloat("Height Scale", &terrainHeightScale, 0.1f, 5.0f)) {
+            if (ImGui::SliderFloat("Height Scale", &terrainHeightScale, 0.1f, 10.0f)) {
                 t->heightScale = terrainHeightScale;
                 terrainSystem.GenerateTerrain(*t); // Regenerate with new height scale
             }
@@ -471,23 +635,17 @@ int main()
         ImGui::Render();
         ImGui_ImplOpenGL3_RenderDrawData(ImGui::GetDrawData());
 
-        // Update ECS components
-        auto transform = registry.GetComponent<TransformComponent>(cube);
-        if (transform) {
-            transform->rotation.y = (float)glfwGetTime() * 50.0f;
-        }
-
         // Animate light position
-        lightPos.x = sin(glfwGetTime()) * 2.0f;
-        lightPos.y = cos(glfwGetTime()) * 1.0f;
-        lightPos.z = cos(glfwGetTime() * 0.5f) * 2.0f;
+        lightPos.x = static_cast<float>(sin(glfwGetTime()) * 3.0f);
+        lightPos.y = 5.0f + static_cast<float>(cos(glfwGetTime()) * 2.0f);
+        lightPos.z = static_cast<float>(cos(glfwGetTime() * 0.5f) * 3.0f); 
 
         // Swap buffers and poll events
         glfwSwapBuffers(window);
         glfwPollEvents();
     }
 
-    // Cleanup - add terrain cleanup
+    // Cleanup
     if (auto terrain = registry.GetComponent<TerrainComponent>(terrainEntity)) {
         terrainSystem.CleanupTerrain(*terrain);
     }
@@ -504,6 +662,13 @@ int main()
     delete modelFlatMaterial;
     delete modelUnlitMaterial;
 
+    // Clean up any additional cube materials
+    for (size_t i = 1; i < cubeEntities.size(); i++) {
+        if (auto mesh = registry.GetComponent<MeshComponent>(cubeEntities[i])) {
+            delete mesh->material;
+        }
+    }
+
     glDeleteVertexArrays(1, &VAO);
     glDeleteBuffers(1, &VBO);
 
@@ -514,14 +679,22 @@ int main()
     return 0;
 }
 
-// Existing callback functions remain the same...
+// Callback functions
 void framebuffer_size_callback(GLFWwindow* window, int width, int height) {
     glViewport(0, 0, width, height);
 }
 
 void mouse_callback(GLFWwindow* window, double xposIn, double yposIn) {
-    float xpos = (float)xposIn;
-    float ypos = (float)yposIn;
+    float xpos = static_cast<float>(xposIn);
+    float ypos = static_cast<float>(yposIn);
+
+    if (cursorEnabled) {
+        // When cursor is enabled (UI mode), don't process camera movement
+        lastX = xpos;
+        lastY = ypos;
+        firstMouse = true; // Reset for next time we disable cursor
+        return;
+    }
 
     if (firstMouse) {
         lastX = xpos;
@@ -530,7 +703,7 @@ void mouse_callback(GLFWwindow* window, double xposIn, double yposIn) {
     }
 
     float xoffset = xpos - lastX;
-    float yoffset = lastY - ypos;
+    float yoffset = lastY - ypos; // Reversed since y-coordinates go from bottom to top
     lastX = xpos;
     lastY = ypos;
 
@@ -538,19 +711,29 @@ void mouse_callback(GLFWwindow* window, double xposIn, double yposIn) {
 }
 
 void scroll_callback(GLFWwindow* window, double xoffset, double yoffset) {
-    camera.ProcessMouseScroll((float)yoffset);
+    camera.ProcessMouseScroll(static_cast<float>(yoffset));
 }
-
-bool cursorEnabled = false;
 
 void processInput(GLFWwindow* window) {
     static bool tabPressedLastFrame = false;
 
-    if (cursorEnabled) firstMouse = true;
-
     if (glfwGetKey(window, GLFW_KEY_TAB) == GLFW_PRESS && !tabPressedLastFrame) {
         cursorEnabled = !cursorEnabled;
-        glfwSetInputMode(window, GLFW_CURSOR, cursorEnabled ? GLFW_CURSOR_NORMAL : GLFW_CURSOR_DISABLED);
+
+        if (cursorEnabled) {
+            // Enable cursor for UI
+            glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_NORMAL);
+            // Store current mouse position when entering UI mode
+            glfwGetCursorPos(window, &lastMouseX, &lastMouseY);
+        }
+        else {
+            // Disable cursor for camera control
+            glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_DISABLED);
+            // Restore mouse position to where it was when we entered UI mode
+            glfwSetCursorPos(window, lastMouseX, lastMouseY);
+            // Reset firstMouse so we don't get a jump
+            firstMouse = true;
+        }
     }
     tabPressedLastFrame = glfwGetKey(window, GLFW_KEY_TAB) == GLFW_PRESS;
 

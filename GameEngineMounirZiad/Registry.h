@@ -4,8 +4,7 @@
 #include <algorithm>
 
 #include "Entity.h"
-#include "Component.h"  // This must include TransformComponent and MeshComponent
-#include "TerrainComponent.h"  // Add this include
+#include "Component.h"  // Include the single component file
 
 class Registry {
 public:
@@ -55,12 +54,13 @@ public:
         return entities;
     }
 
-    // Simple DestroyEntity implementation
+    // Single DestroyEntity implementation
     void DestroyEntity(Entity entity) {
-        // Remove from all component storages
         transformComponents.erase(entity);
         meshComponents.erase(entity);
-        terrainComponents.erase(entity);  // Add this line
+        terrainComponents.erase(entity);
+        physicsComponents.erase(entity);
+        colliderComponents.erase(entity);
     }
 
 private:
@@ -69,7 +69,9 @@ private:
     // Explicit storage for each component type
     std::unordered_map<Entity, TransformComponent> transformComponents;
     std::unordered_map<Entity, MeshComponent> meshComponents;
-    std::unordered_map<Entity, TerrainComponent> terrainComponents;  // Add this line
+    std::unordered_map<Entity, TerrainComponent> terrainComponents;
+    std::unordered_map<Entity, PhysicsComponent> physicsComponents;
+    std::unordered_map<Entity, ColliderComponent> colliderComponents;
 
     template<typename T>
     std::unordered_map<Entity, T>& GetComponentStorage() {
@@ -79,8 +81,14 @@ private:
         else if constexpr (std::is_same_v<T, MeshComponent>) {
             return meshComponents;
         }
-        else if constexpr (std::is_same_v<T, TerrainComponent>) {  // Add this condition
+        else if constexpr (std::is_same_v<T, TerrainComponent>) {
             return terrainComponents;
+        }
+        else if constexpr (std::is_same_v<T, PhysicsComponent>) {
+            return physicsComponents;
+        }
+        else if constexpr (std::is_same_v<T, ColliderComponent>) {
+            return colliderComponents;
         }
         else {
             static_assert(sizeof(T) == 0, "Unknown component type");

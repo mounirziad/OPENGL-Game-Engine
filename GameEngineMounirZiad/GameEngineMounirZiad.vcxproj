@@ -142,6 +142,7 @@
     <ClCompile Include="libs\tinygltf-release\tiny_gltf.cc" />
     <ClCompile Include="libs\tinyobjloader-release\tiny_obj_loader.cc" />
     <ClCompile Include="main.cpp" />
+    <ClCompile Include="PhysicsSystem.cpp" />
     <ClCompile Include="ShaderManager.cpp" />
     <ClCompile Include="TerrainSystem.cpp" />
   </ItemGroup>
@@ -150,6 +151,7 @@
     <ClInclude Include="Component.h" />
     <ClInclude Include="Entity.h" />
     <ClInclude Include="ModelLoader.h" />
+    <ClInclude Include="PhysicsSystem.h" />
     <ClInclude Include="Registry.h" />
     <ClInclude Include="RenderSystem.h" />
     <ClInclude Include="imgui\backends\imgui_impl_glfw.h" />
@@ -168,7 +170,6 @@
     <ClInclude Include="Material.h" />
     <ClInclude Include="Shader.h" />
     <ClInclude Include="ShaderManager.h" />
-    <ClInclude Include="TerrainComponent.h" />
     <ClInclude Include="TerrainSystem.h" />
     <ClInclude Include="TextureLoader.h" />
   </ItemGroup>

@@ -1,10 +1,10 @@
 #pragma once
 #include "Registry.h"
-#include "TerrainComponent.h"
-#include "ShaderManager.h"
-#include <glm/glm.hpp>
+#include "Component.h"  // Changed from TerrainComponent.h
 #include <glad/glad.h>
-#include "Camera.h"
+#include <glm/glm.hpp>
+#include "Camera.h"        
+#include "ShaderManager.h" 
 
 class TerrainSystem {
 public:
