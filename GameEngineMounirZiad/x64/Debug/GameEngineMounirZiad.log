@@ -1,0 +1,7 @@
+﻿  TerrainSystem.cpp
+C:\Users\Mounir\source\repos\GameEngineMounirZiad\GameEngineMounirZiad\Shader.h(39,40): warning C4101: 'e': unreferenced local variable
+  (compiling source file 'TerrainSystem.cpp')
+  
+C:\Users\Mounir\source\repos\GameEngineMounirZiad\GameEngineMounirZiad\TerrainSystem.cpp(94,39): warning C4267: '=': conversion from 'size_t' to 'unsigned int', possible loss of data
+C:\Users\Mounir\source\repos\GameEngineMounirZiad\GameEngineMounirZiad\TerrainSystem.cpp(95,38): warning C4267: '=': conversion from 'size_t' to 'unsigned int', possible loss of data
+  GameEngineMounirZiad.vcxproj -> C:\Users\Mounir\source\repos\GameEngineMounirZiad\x64\Debug\GameEngineMounirZiad.exe
