@@ -1,4 +1,3 @@
-// Camera.h implementation below
 #pragma once  // Include guard - prevent multiple inclusions
 #include <glm/glm.hpp>                      // GLM math library
 #include <glm/gtc/matrix_transform.hpp>     // GLM matrix transformations
@@ -20,6 +19,10 @@ const float SENSITIVITY = 0.1f;   // Mouse sensitivity multiplier
 const float ZOOM = 45.0f;         // Field of view in degrees
 
 class Camera {
+private:
+    glm::mat4 projection;          // Projection matrix
+    float aspectRatio;             // Current aspect ratio
+
 public:
     // camera Attributes - vectors defining camera orientation
     glm::vec3 Position;    // Camera position in world space
@@ -51,12 +54,30 @@ public:
         WorldUp = up;         // Set world up vector
         Yaw = yaw;           // Set yaw angle
         Pitch = pitch;       // Set pitch angle
+        aspectRatio = 1.0f;  // Default aspect ratio
+        projection = glm::mat4(1.0f); // Initialize projection matrix
         updateCameraVectors(); // Calculate front, right, up vectors from angles
+    }
+
+    // Update projection matrix with new aspect ratio
+    void UpdateProjectionMatrix(float newAspectRatio) {
+        aspectRatio = newAspectRatio;
+        projection = glm::perspective(glm::radians(Zoom), aspectRatio, 0.1f, 100.0f);
     }
 
     // returns view matrix - creates lookAt matrix for shader
     glm::mat4 GetViewMatrix() {
         return glm::lookAt(Position, Position + Front, Up);  // Create view matrix: eye, center, up
+    }
+
+    // returns projection matrix
+    glm::mat4 GetProjectionMatrix() const {
+        return projection;
+    }
+
+    // Get current aspect ratio
+    float GetAspectRatio() const {
+        return aspectRatio;
     }
 
     // keyboard input - process keyboard movement
@@ -94,6 +115,9 @@ public:
         Zoom -= yoffset;         // Adjust zoom level by scroll amount
         if (Zoom < 1.0f) Zoom = 1.0f;     // Clamp minimum zoom
         if (Zoom > 45.0f) Zoom = 45.0f;   // Clamp maximum zoom
+
+        // Update projection matrix with new zoom
+        projection = glm::perspective(glm::radians(Zoom), aspectRatio, 0.1f, 100.0f);
     }
 
 private:

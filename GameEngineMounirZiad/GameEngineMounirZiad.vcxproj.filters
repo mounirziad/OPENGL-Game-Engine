@@ -63,6 +63,12 @@
     <ClCompile Include="PhysicsSystem.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="GlobalIllumination.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="BloomSystem.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Camera.h">
@@ -140,6 +146,12 @@
     <ClInclude Include="PhysicsSystem.h">
       <Filter>Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="GlobalIllumination.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="BloomSystem.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <None Include="basic.vert">
@@ -176,6 +188,18 @@
     <None Include="shaders\unlit.frag" />
     <None Include="shaders\pbr.vert" />
     <None Include="shaders\pbr.frag" />
+    <None Include="shaders\gi_apply.frag" />
+    <None Include="shaders\depth.vert" />
+    <None Include="shaders\depth.frag" />
+    <None Include="shaders\gi_apply.vert" />
+    <None Include="shaders\voxelization.vert" />
+    <None Include="shaders\voxelization.frag" />
+    <None Include="shaders\bloom_bright.vert" />
+    <None Include="shaders\bloom_bright.frag" />
+    <None Include="shaders\bloom_blur.vert" />
+    <None Include="shaders\bloom_blur.frag" />
+    <None Include="shaders\bloom_final.vert" />
+    <None Include="shaders\bloom_final.frag" />
   </ItemGroup>
   <ItemGroup>
     <Text Include="libs\tinygltf-release\CMakeLists.txt" />

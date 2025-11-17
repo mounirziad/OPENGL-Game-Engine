@@ -1,4 +1,5 @@
 C:\Users\Mounir\Downloads\glad\src\glad.c;C:\Users\Mounir\source\repos\GameEngineMounirZiad\GameEngineMounirZiad\x64\Debug\glad.obj
+C:\Users\Mounir\source\repos\GameEngineMounirZiad\GameEngineMounirZiad\GlobalIllumination.cpp;C:\Users\Mounir\source\repos\GameEngineMounirZiad\GameEngineMounirZiad\x64\Debug\GlobalIllumination.obj
 C:\Users\Mounir\source\repos\GameEngineMounirZiad\GameEngineMounirZiad\imgui\backends\imgui_impl_glfw.cpp;C:\Users\Mounir\source\repos\GameEngineMounirZiad\GameEngineMounirZiad\x64\Debug\imgui_impl_glfw.obj
 C:\Users\Mounir\source\repos\GameEngineMounirZiad\GameEngineMounirZiad\imgui\backends\imgui_impl_opengl3.cpp;C:\Users\Mounir\source\repos\GameEngineMounirZiad\GameEngineMounirZiad\x64\Debug\imgui_impl_opengl3.obj
 C:\Users\Mounir\source\repos\GameEngineMounirZiad\GameEngineMounirZiad\imgui\imgui.cpp;C:\Users\Mounir\source\repos\GameEngineMounirZiad\GameEngineMounirZiad\x64\Debug\imgui.obj
@@ -12,4 +13,5 @@ C:\Users\Mounir\source\repos\GameEngineMounirZiad\GameEngineMounirZiad\libs\tiny
 C:\Users\Mounir\source\repos\GameEngineMounirZiad\GameEngineMounirZiad\main.cpp;C:\Users\Mounir\source\repos\GameEngineMounirZiad\GameEngineMounirZiad\x64\Debug\main.obj
 C:\Users\Mounir\source\repos\GameEngineMounirZiad\GameEngineMounirZiad\PhysicsSystem.cpp;C:\Users\Mounir\source\repos\GameEngineMounirZiad\GameEngineMounirZiad\x64\Debug\PhysicsSystem.obj
 C:\Users\Mounir\source\repos\GameEngineMounirZiad\GameEngineMounirZiad\ShaderManager.cpp;C:\Users\Mounir\source\repos\GameEngineMounirZiad\GameEngineMounirZiad\x64\Debug\ShaderManager.obj
+C:\Users\Mounir\source\repos\GameEngineMounirZiad\GameEngineMounirZiad\BloomSystem.cpp;C:\Users\Mounir\source\repos\GameEngineMounirZiad\GameEngineMounirZiad\x64\Debug\BloomSystem.obj
 C:\Users\Mounir\source\repos\GameEngineMounirZiad\GameEngineMounirZiad\TerrainSystem.cpp;C:\Users\Mounir\source\repos\GameEngineMounirZiad\GameEngineMounirZiad\x64\Debug\TerrainSystem.obj

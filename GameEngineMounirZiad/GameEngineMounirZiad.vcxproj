@@ -131,6 +131,7 @@
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClCompile Include="..\..\..\..\Downloads\glad\src\glad.c" />
+    <ClCompile Include="GlobalIllumination.cpp" />
     <ClCompile Include="imgui\backends\imgui_impl_glfw.cpp" />
     <ClCompile Include="imgui\backends\imgui_impl_opengl3.cpp" />
     <ClCompile Include="imgui\imgui.cpp" />
@@ -144,12 +145,14 @@
     <ClCompile Include="main.cpp" />
     <ClCompile Include="PhysicsSystem.cpp" />
     <ClCompile Include="ShaderManager.cpp" />
+    <ClCompile Include="BloomSystem.cpp" />
     <ClCompile Include="TerrainSystem.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Camera.h" />
     <ClInclude Include="Component.h" />
     <ClInclude Include="Entity.h" />
+    <ClInclude Include="GlobalIllumination.h" />
     <ClInclude Include="ModelLoader.h" />
     <ClInclude Include="PhysicsSystem.h" />
     <ClInclude Include="Registry.h" />
@@ -170,6 +173,7 @@
     <ClInclude Include="Material.h" />
     <ClInclude Include="Shader.h" />
     <ClInclude Include="ShaderManager.h" />
+    <ClInclude Include="BloomSystem.h" />
     <ClInclude Include="TerrainSystem.h" />
     <ClInclude Include="TextureLoader.h" />
   </ItemGroup>
@@ -188,8 +192,18 @@
     <None Include="libs\tinygltf-release\vcsetup.bat" />
     <None Include="shaders\basic.frag" />
     <None Include="shaders\basic.vert" />
+    <None Include="shaders\bloom_blur.frag" />
+    <None Include="shaders\bloom_blur.vert" />
+    <None Include="shaders\bloom_bright.frag" />
+    <None Include="shaders\bloom_bright.vert" />
+    <None Include="shaders\bloom_final.frag" />
+    <None Include="shaders\bloom_final.vert" />
+    <None Include="shaders\depth.frag" />
+    <None Include="shaders\depth.vert" />
     <None Include="shaders\flat.frag" />
     <None Include="shaders\flat.vert" />
+    <None Include="shaders\gi_apply.frag" />
+    <None Include="shaders\gi_apply.vert" />
     <None Include="shaders\lighting.frag" />
     <None Include="shaders\lighting.vert" />
     <None Include="shaders\pbr.frag" />
@@ -198,6 +212,8 @@
     <None Include="shaders\phong.vert" />
     <None Include="shaders\unlit.frag" />
     <None Include="shaders\unlit.vert" />
+    <None Include="shaders\voxelization.frag" />
+    <None Include="shaders\voxelization.vert" />
     <None Include="shaders\wireframe.frag" />
     <None Include="shaders\wireframe.vert" />
   </ItemGroup>
